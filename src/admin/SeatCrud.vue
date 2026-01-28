@@ -11,6 +11,17 @@
           :area-rows="areaRows"
           v-if="areaRows"
         ></ToggleArea>
+        <div class="btn-group">
+          <el-button @click="batchAdd(0)">🪑 批量添加椅子</el-button>
+          <el-button @click="batchAdd(1)">🧱 批量添加桌子</el-button>
+          <el-button v-if="batchMode" type="primary" @click="confirmBatchAdd">
+            ✅ 确认添加 ({{ batchSelected.length }})
+          </el-button>
+          <el-button v-if="batchMode" @click="cancelBatchAdd">
+            ❌ 取消
+          </el-button>
+        </div>
+
         <HeadTip></HeadTip>
       </div>
       <Area
@@ -19,12 +30,14 @@
         v-if="currentArea && currentArea.rows && currentArea.columns"
         :seat-rows="seatRows || []"
         :manageMode="manageMode"
+        :batchMode="batchMode"
+        :batch-selected="batchSelected"
         :rows="currentArea.rows"
         :columns="currentArea.columns"
         @seatClick="seatClick"
         @blankClick="blankClick"
       >
-        <div slot="blankMenu" class="blankMenu">
+        <div slot="blankMenu" class="blankMenu" v-if="!batchMode">
           <div @click="addSeat(0)">添加座位</div>
           <div @click="addSeat(1)">添加桌子</div>
         </div>
@@ -41,6 +54,7 @@ import Area from "@/components/Area";
 import request from "@/req";
 import HeadTip from "@/components/HeadTip";
 import ToggleArea from "@/components/ToggleArea";
+import { Button } from "element-ui";
 
 export default {
   name: "SeatCrud",
@@ -51,6 +65,9 @@ export default {
       currentArea: null,
       canAdd: true,
       manageMode: true,
+      batchMode: false,
+      batchType: null, // 0 椅子 / 1 桌子
+      batchSelected: [], // [{row, column}]
       seatCur: {
         row: Number,
         column: Number,
@@ -60,16 +77,6 @@ export default {
     };
   },
   methods: {
-    deleteSeat() {
-      request
-        .post("/admin/deleteSeat", {
-          sid: this.sid,
-        })
-        .then((res) => {
-          this.$message("删除成功");
-          this.getSeatRows();
-        });
-    },
     seatClick(index) {
       //正在使用的座位无法操作
       if (
@@ -80,6 +87,29 @@ export default {
         return;
       }
       this.sid = this.seatRows[index].sid;
+    },
+
+    blankClick(index, row, column) {
+      // 🔥 批量选择模式
+      if (this.batchMode) {
+        const key = `${row}-${column}`;
+        const i = this.batchSelected.findIndex(
+          (p) => p.row === row && p.column === column,
+        );
+
+        if (i > -1) {
+          // 再点一次取消选择
+          this.batchSelected.splice(i, 1);
+        } else {
+          this.batchSelected.push({ row, column });
+        }
+        return;
+      }
+
+      // ⬇️ 原来的单个添加逻辑
+      this.seatCur.index = index;
+      this.seatCur.row = row;
+      this.seatCur.column = column;
     },
     addSeat(type) {
       this.$refs.room.closeLastPop();
@@ -95,13 +125,64 @@ export default {
           this.getSeatRows();
         });
     },
-    blankClick(index, row, column) {
-      this.seatCur.index = index;
-      this.seatCur.row = row;
-      this.seatCur.column = column;
-      console.log("index===", index);
-      console.log("row===", row);
-      console.log("column===", column);
+    batchAdd(type) {
+      if (!this.currentArea) return;
+
+      this.batchMode = true;
+      this.batchType = type;
+      this.batchSelected = [];
+
+      this.$message.info(
+        `已进入批量选择模式，请点击空白格选择${
+          type === 0 ? "椅子" : "桌子"
+        }位置`,
+      );
+    },
+    confirmBatchAdd() {
+      if (this.batchSelected.length === 0) {
+        this.$message.warning("请至少选择一个位置");
+        return;
+      }
+
+      this.$confirm(
+        `确定生成 ${this.batchSelected.length} 个${
+          this.batchType === 0 ? "椅子" : "桌子"
+        }？`,
+        "确认批量生成",
+        { type: "warning" },
+      ).then(() => {
+        request
+          .post("/admin/addSeatsBatch", {
+            area: this.currentArea.aid,
+            type: this.batchType,
+            rows: this.batchSelected,
+          })
+          .then(() => {
+            this.$message.success("批量添加成功");
+            this.exitBatchMode();
+            this.getSeatRows();
+          });
+      });
+    },
+    cancelBatchAdd() {
+      this.exitBatchMode();
+    },
+
+    exitBatchMode() {
+      this.batchMode = false;
+      this.batchType = null;
+      this.batchSelected = [];
+    },
+
+    deleteSeat() {
+      request
+        .post("/admin/deleteSeat", {
+          sid: this.sid,
+        })
+        .then((res) => {
+          this.$message("删除成功");
+          this.getSeatRows();
+        });
     },
     onAreaChange(area) {
       console.log("区域切换:", area);

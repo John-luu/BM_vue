@@ -7,7 +7,12 @@
         class="item"
         @click="blankClick(index)"
       >
-        <div v-if="!item.show" class="seat"></div>
+        <div v-if="!item.show" class="seat" :class="getBatchSeatClass(index)">
+          <!-- 批量模式下显示选中标记 -->
+          <div v-if="isSelectedInBatch(index)" class="batch-selected-indicator">
+            ✓
+          </div>
+        </div>
         <van-popover
           v-else
           v-model="item.show"
@@ -19,8 +24,19 @@
           <template #reference>
             <div
               class="seat"
-              :class="index === lastBlankIndex ? 'seatSelect' : ''"
-            ></div>
+              :class="[
+                index === lastBlankIndex ? 'seatSelect' : '',
+                getBatchSeatClass(index),
+              ]"
+            >
+              <!-- 批量模式下显示选中标记 -->
+              <div
+                v-if="isSelectedInBatch(index)"
+                class="batch-selected-indicator"
+              >
+                ✓
+              </div>
+            </div>
           </template>
         </van-popover>
       </div>
@@ -68,6 +84,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    batchMode: {
+      type: Boolean,
+      default: false,
+    },
     seatRows: {
       type: Array,
     },
@@ -79,8 +99,32 @@ export default {
       type: Number,
       required: true,
     },
+    batchSelected: {
+      // 添加这个prop来接收选中的位置
+      type: Array,
+      default: () => [],
+    },
   },
   methods: {
+    // 判断空白格是否被选中
+    isSelectedInBatch(index) {
+      if (!this.batchMode || !this.batchSelected.length) return false;
+
+      const realIndex = index + 1;
+      let row, column;
+
+      if (realIndex % this.columns === 0) {
+        row = Math.trunc(realIndex / this.columns);
+        column = this.columns;
+      } else {
+        row = Math.trunc(realIndex / this.columns) + 1;
+        column = realIndex % this.columns;
+      }
+
+      return this.batchSelected.some(
+        (item) => item.row === row && item.column === column,
+      );
+    },
     closeLastPop() {
       for (let i = 0; i < this.blankRows.length; i++) {
         this.blankRows[i].show = false;
@@ -90,9 +134,20 @@ export default {
       }
     },
     seatClick(index) {
+      // 如果是批量模式，不显示菜单
+      if (this.batchMode) {
+        this.$emit("seatClick", index);
+        return;
+      }
       this.closeLastPop();
       this.seatRows[index].show = true;
       this.$emit("seatClick", index);
+    },
+    // 获取批量模式下的样式类
+    getBatchSeatClass(index) {
+      if (!this.batchMode) return "";
+
+      return this.isSelectedInBatch(index) ? "batch-selected" : "";
     },
     closeOnOutside(ev) {
       if (
@@ -109,6 +164,24 @@ export default {
       if (!this.manageMode) return;
       console.log("222");
       this.lastBlankIndex = index;
+      // 如果是批量模式，不显示菜单
+      if (this.batchMode) {
+        const realIndex = index + 1;
+        let row, column;
+
+        if (realIndex % this.columns === 0) {
+          row = Math.trunc(realIndex / this.columns);
+          column = this.columns;
+        } else {
+          row = Math.trunc(realIndex / this.columns) + 1;
+          column = realIndex % this.columns;
+        }
+
+        this.$emit("blankClick", realIndex, row, column);
+        return;
+      }
+
+      // 非批量模式才显示菜单
       this.closeLastPop();
       this.blankRows[index].show = true;
 
@@ -163,6 +236,10 @@ export default {
     seatRows() {
       this.lastBlankIndex = -1;
     },
+    batchSelected() {
+      // 当选中的位置变化时，强制更新视图
+      this.$forceUpdate();
+    },
   },
   computed: {
     gridStyle() {
@@ -215,5 +292,29 @@ export default {
   width: 100%;
   height: 100%;
   background-color: #f0f0f0; /* 灰色背景，方便查看 */
+}
+/* 批量选中的样式 */
+.batch-selected {
+  background-color: #409eff !important;
+  border: 2px solid #67c23a !important;
+  box-sizing: border-box;
+}
+
+.batch-selected-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+}
+/* 确保座位组件正确显示 */
+::v-deep .seat-component {
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 </style>
