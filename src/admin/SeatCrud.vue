@@ -5,6 +5,7 @@
         <ToggleArea
           @changeArea="onAreaChange"
           @areaCreated="onAreaCreated"
+          @areaDeleted="refreshAreaList"
           :can-add="canAdd"
           ref="toggleArea"
           :area-rows="areaRows"

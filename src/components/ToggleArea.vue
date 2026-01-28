@@ -5,17 +5,34 @@
       size="mini"
       v-model="areaName"
       @change="changeArea"
+      popper-class="area-select-popper"
     >
-      <el-option
-        v-for="item in areaRows"
-        :key="item.aid"
-        :label="item.areaName"
-        :value="item.aid"
-      >
-      </el-option>
-      <!-- 增加区域的选项 -->
-      <el-option v-if="canAdd" label="增加区域" value="addArea" />
+      <!-- 区域列表（滚动） -->
+      <div class="area-scroll">
+        <el-option
+          v-for="item in areaRows"
+          :key="item.aid"
+          :label="item.areaName"
+          :value="item.aid"
+        />
+      </div>
+
+      <!-- 底部管理区（不参与选择） -->
+      <div class="area-manage">
+        <div v-if="canAdd" class="manage-item add" @click.stop="openAddArea">
+          ➕ 增加区域
+        </div>
+
+        <div
+          v-if="canAdd && areaRows.length > 0"
+          class="manage-item delete"
+          @click.stop="confirmDeleteArea"
+        >
+          🗑 删除当前区域
+        </div>
+      </div>
     </el-select>
+
     <!-- 弹窗，用于增加区域 -->
     <el-dialog :visible.sync="dialogVisible" title="添加区域">
       <el-form :model="form" ref="form" label-width="80px">
@@ -93,6 +110,9 @@ export default {
         this.$emit("changeArea", this.getArea());
       }
     },
+    openAddArea() {
+      this.dialogVisible = true;
+    },
     createArea() {
       // 提交表单数据到后端接口
       request
@@ -125,6 +145,30 @@ export default {
           this.$message.error("区域创建失败");
         });
     },
+    confirmDeleteArea() {
+      const cur = this.getArea();
+      if (!cur) return;
+
+      this.$confirm(
+        `确定删除区域【${cur.areaName}】吗？\n该区域下所有座位将被一并删除！`,
+        "危险操作",
+        {
+          type: "warning",
+          confirmButtonText: "确定删除",
+          cancelButtonText: "取消",
+        },
+      )
+        .then(() => {
+          return request.post("/public/deleteAreaWithSeats", {
+            aid: cur.aid,
+          });
+        })
+        .then(() => {
+          this.$message.success("区域删除成功");
+          this.$emit("areaDeleted");
+        })
+        .catch(() => {});
+    },
   },
   created() {
     if (this.areaRows && this.areaRows.length > 0) {
@@ -147,4 +191,42 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style>
+/* 下拉框整体 */
+.area-select-popper .el-select-dropdown {
+  width: 180px; /* 固定宽度 */
+}
+
+/* 上方区域列表：可滚动 */
+.area-select-popper .area-scroll {
+  max-height: 200px; /* 固定高度 */
+  overflow-y: auto;
+}
+
+.area-select-popper .area-manage {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  border-top: 1px solid #ebeef5;
+}
+
+.area-select-popper .manage-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.area-select-popper .manage-item.add {
+  color: #409eff;
+}
+
+.area-select-popper .manage-item.delete {
+  color: #f56c6c;
+}
+
+.area-select-popper .manage-item:hover {
+  background: #f5f7fa;
+}
+</style>
