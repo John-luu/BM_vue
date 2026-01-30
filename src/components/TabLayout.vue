@@ -58,7 +58,7 @@ export default {
   border-radius: 16px;
 
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-  z-index: 999;
+  z-index: 99999;
 
   overflow: hidden; /* 关键 */
 }
