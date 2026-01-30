@@ -248,7 +248,7 @@ export default {
         gridTemplateColumns: `repeat(${this.columns}, 32px)`,
       };
       console.log("gridStyle:", style);
-      console.log("预期尺寸:", this.rows * 32, "px ×", this.columns * 32, "px");
+      console.log("预期尺寸:", this.rows * 32, "px", this.columns * 32, "px");
       return style;
     },
   },
@@ -256,14 +256,6 @@ export default {
 </script>
 
 <style scoped>
-/* .room {
-  display: grid;
-}
-
-.item {
-  width: 32px;
-  height: 32px;
-} */
 /* 添加调试样式 */
 .area-wrapper {
   position: relative;
@@ -295,8 +287,8 @@ export default {
 }
 /* 批量选中的样式 */
 .batch-selected {
-  background-color: #409eff !important;
-  border: 2px solid #67c23a !important;
+  background-color: #409eff;
+
   box-sizing: border-box;
 }
 

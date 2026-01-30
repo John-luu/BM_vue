@@ -1,29 +1,54 @@
 <template>
   <div class="root">
     <el-card style="margin-top: 10%; position: relative">
-      <div slot="header" class="clearfix">
-        <ToggleArea
-          @changeArea="onAreaChange"
-          @areaCreated="onAreaCreated"
-          @areaDeleted="refreshAreaList"
-          :can-add="canAdd"
-          ref="toggleArea"
-          :area-rows="areaRows"
-          v-if="areaRows"
-        ></ToggleArea>
-        <div class="btn-group">
-          <el-button @click="batchAdd(0)">🪑 批量添加椅子</el-button>
-          <el-button @click="batchAdd(1)">🧱 批量添加桌子</el-button>
-          <el-button v-if="batchMode" type="primary" @click="confirmBatchAdd">
-            ✅ 确认添加 ({{ batchSelected.length }})
-          </el-button>
-          <el-button v-if="batchMode" @click="cancelBatchAdd">
-            ❌ 取消
-          </el-button>
+      <div slot="header" class="card-header">
+        <!-- 左侧：区域选择 -->
+        <div class="header-left">
+          <ToggleArea
+            @changeArea="onAreaChange"
+            @areaCreated="onAreaCreated"
+            @areaDeleted="refreshAreaList"
+            :can-add="canAdd"
+            ref="toggleArea"
+            :area-rows="areaRows"
+            v-if="areaRows"
+          />
         </div>
 
-        <HeadTip></HeadTip>
+        <!-- 右侧：批量按钮 -->
+        <div class="header-right">
+          <el-button
+            size="mini"
+            plain
+            @click="batchAdd(0)"
+            :type="batchMode && batchType === 0 ? 'primary' : ''"
+          >
+            🪑 批量添加椅子
+          </el-button>
+          <el-button
+            size="mini"
+            plain
+            @click="batchAdd(1)"
+            :type="batchMode && batchType === 0 ? 'primary' : ''"
+          >
+            🧱 批量添加桌子
+          </el-button>
+
+          <el-button
+            v-if="batchMode"
+            size="mini"
+            type="primary"
+            @click="confirmBatchAdd"
+          >
+            ✅ 确认 ({{ batchSelected.length }})
+          </el-button>
+
+          <el-button v-if="batchMode" size="mini" @click="cancelBatchAdd">
+            取消
+          </el-button>
+        </div>
       </div>
+
       <Area
         class="area-container"
         ref="room"
@@ -252,5 +277,28 @@ el-card {
 }
 .area-container {
   flex: 1;
+}
+/* header 总容器 */
+::v-deep .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 左右两侧 */
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 让按钮风格更“工具栏化” */
+.header-right .el-button {
+  font-weight: 500;
 }
 </style>

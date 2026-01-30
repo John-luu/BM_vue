@@ -196,6 +196,10 @@ export default {
 .area-select-popper .el-select-dropdown {
   width: 180px; /* 固定宽度 */
 }
+.area-select-popper .el-select-dropdown__wrap {
+  max-height: none !important;
+  overflow: visible !important;
+}
 
 /* 上方区域列表：可滚动 */
 .area-select-popper .area-scroll {
@@ -208,6 +212,7 @@ export default {
   bottom: 0;
   background: #fff;
   border-top: 1px solid #ebeef5;
+  z-index: 1;
 }
 
 .area-select-popper .manage-item {
@@ -216,6 +221,18 @@ export default {
   cursor: pointer;
   display: flex;
   align-items: center;
+}
+
+.area-select-popper .manage-item:hover {
+  background: #f5f7fa;
+}
+
+.area-select-popper .manage-item.add {
+  color: #409eff;
+}
+
+.area-select-popper .manage-item.delete {
+  color: #f56c6c;
 }
 
 .area-select-popper .manage-item.add {
