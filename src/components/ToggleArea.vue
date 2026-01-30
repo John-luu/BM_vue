@@ -42,7 +42,7 @@
         <el-form-item label="区域缩写">
           <el-input v-model="form.subName" placeholder="请输入区域缩写" />
         </el-form-item>
-        <el-form-item label="空白表格尺寸">
+        <el-form-item label="表格尺寸">
           <!-- 增大输入框 -->
           <el-input-number
             v-model="form.rows"

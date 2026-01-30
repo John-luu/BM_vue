@@ -29,7 +29,7 @@
             size="mini"
             plain
             @click="batchAdd(1)"
-            :type="batchMode && batchType === 0 ? 'primary' : ''"
+            :type="batchMode && batchType === 1 ? 'primary' : ''"
           >
             🧱 批量添加桌子
           </el-button>
@@ -261,10 +261,9 @@ export default {
 
 <style scoped>
 .root {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  align-items: center;
+  width: 100%;
+  height: 100vh;
+  padding: 16px;
 }
 el-card {
   width: 100%;
